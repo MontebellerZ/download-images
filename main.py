@@ -2,21 +2,31 @@ import json
 import time
 import webbrowser
 import pyautogui
+import os
 
 # Configurações
-TEMPO_CARREGAMENTO = 1  # segundos para esperar o site abrir
-TEMPO_SALVAR = 1  # segundos para esperar o site abrir
+TEMPO_CARREGAMENTO = 1
+TEMPO_SALVAR = 1
 
-# Posições de clique (ajuste para sua tela)
 CLICKS = [
     {"x": 1890, "y": 154, "t": 0.2},
     {"x": 1600, "y": 120, "t": 1, "img": "adicionar-album.png", "region": (320, 480)},
     {"x": 916, "y": 602, "t": 1},
 ]
 
-def carregar_links():
-    with open("links.json", "r") as f:
+# ------------------ ARQUIVOS ------------------
+
+def carregar_json(nome_arquivo):
+    if not os.path.exists(nome_arquivo):
+        return []
+    with open(nome_arquivo, "r") as f:
         return json.load(f)
+
+def salvar_json(nome_arquivo, dados):
+    with open(nome_arquivo, "w") as f:
+        json.dump(dados, f, indent=2)
+
+# ------------------ AUTOMAÇÃO ------------------
 
 def executar_cliques():
     for click in CLICKS:
@@ -42,27 +52,45 @@ def executar_cliques():
         pyautogui.click(xPos, yPos)
 
 def fechar_navegador():
-    # Fecha aba atual (Ctrl + W)
     pyautogui.hotkey('ctrl', 'w')
 
-def main():
-    links = carregar_links()
+# ------------------ MAIN ------------------
 
-    print("Iniciando em 5 segundos... (mova o mouse para o canto para abortar)")
+def main():
+    links = carregar_json("links.json")
+    feitos = carregar_json("feitos.json")
+
+    print("Iniciando em 5 segundos...")
     time.sleep(5)
 
-    for i, url in enumerate(links):
+    i = 0
+    while i < len(links):
+        url = links[i]
         print(f"Abrindo {i+1}/{len(links)}: {url}")
-        
-        webbrowser.open(url)
 
-        time.sleep(TEMPO_CARREGAMENTO)
+        try:
+            webbrowser.open(url)
 
-        executar_cliques()
+            time.sleep(TEMPO_CARREGAMENTO)
 
-        time.sleep(TEMPO_SALVAR)
+            executar_cliques()
 
-        fechar_navegador()
+            time.sleep(TEMPO_SALVAR)
+
+            fechar_navegador()
+
+            # ✅ SUCESSO → move o link
+            feitos.append(url)
+            links.pop(i)
+
+            salvar_json("feitos.json", feitos)
+            salvar_json("links.json", links)
+
+            print(f"✔ Sucesso: {url}")
+
+        except Exception as e:
+            print(f"❌ Erro no link {url}: {e}")
+            i += 1  # só avança se deu erro
 
     print("Finalizado!")
 
