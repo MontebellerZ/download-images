@@ -77,9 +77,6 @@ def main():
 
             time.sleep(TEMPO_SALVAR)
 
-            fechar_navegador()
-
-            # ✅ SUCESSO → move o link
             feitos.append(url)
             links.pop(i)
 
@@ -91,6 +88,13 @@ def main():
         except Exception as e:
             print(f"❌ Erro no link {url}: {e}")
             i += 1  # só avança se deu erro
+
+        finally:
+            try:
+                fechar_navegador()
+            except Exception as e:
+                print(f"⚠ Erro ao fechar navegador: {e}")
+
 
     print("Finalizado!")
 
